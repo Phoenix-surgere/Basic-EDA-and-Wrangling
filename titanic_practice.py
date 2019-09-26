@@ -88,6 +88,46 @@ print(pivot)
 
 
 #Modelling
-data_model = pd.get_dummies(data=data, drop_first=True)
+seed = 43
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier as RFC, GradientBoostingClassifier as GBC
+from sklearn.linear_model import LogisticRegression as LR
+from sklearn import metrics as m
+import xgboost as xgb
+from hyperopt import fmin, hp, tpe
+from plot_confusion_matrix import plot_matrix
+from helper_funcs import plot_roc_auc, plot_precision_recall
 
+#Data preprocessing 
+targets = data.Survived; targets = targets.map({'Died': 0, 'Survived':1})
+data.drop(columns=['Survived'],inplace=True)
+data.Pclass = data.Pclass.map({'Poor':1, 'Medium':2, 'Upper':3})
+data_model = pd.get_dummies(data=data, drop_first=True)
+X_train, X_test, y_train, y_test = train_test_split(data_model, targets,
+                test_size=0.15, random_state=seed, stratify=targets)
+#Model Instantiation
+logit = LR(random_state=seed,solver='lbfgs',max_iter=300)
+rf = RFC(n_estimators=250, random_state=seed)
+gb = GBC(n_estimators=250, random_state=seed)
+xgb = xgb.XGBClassifier(objective='reg:logistic', n_estimators=250, seed=42)
+models = [logit, rf,gb,xgb]
+labels = ['Died', 'Survived']
+
+
+def fit_metrics(model, Xtr, ytr, Xts, yts, labels):
+    print(model.__class__.__name__ + ' Results:')
+    model.fit(Xtr, ytr)
+    cm = m.confusion_matrix(yts, model.predict(Xts))
+    plot_matrix(cm, classes=labels, normalize=True,
+    title='Confusion Matrix for Titanic Test Data'); plt.show()
+    plot_roc_auc(yts, logit.predict_proba(Xts)[:,1])
+    plot_precision_recall(yts, logit.predict_proba(Xts)[:,1])
+    classification_metrics(yts,logit.predict(Xts))
+    
+#need to add Cross-Validation etc to make it more interesting!
+for model in models:
+    print('*'*25)
+    fit_metrics(model, X_train, y_train, X_test, y_test, labels)
+    print('*'*25)
+    
     
