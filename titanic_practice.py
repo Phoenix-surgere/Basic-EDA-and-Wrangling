@@ -124,10 +124,35 @@ def fit_metrics(model, Xtr, ytr, Xts, yts, labels):
     plot_precision_recall(yts, logit.predict_proba(Xts)[:,1])
     classification_metrics(yts,logit.predict(Xts))
     
-#need to add Cross-Validation etc to make it more interesting!
+#need to add Cross-Validation for more reliable results, here we get Bird's Eye view
 for model in models:
     print('*'*25)
     fit_metrics(model, X_train, y_train, X_test, y_test, labels)
     print('*'*25)
     
+ dist_rf = {    "n_estimators"      : [100,250,500],
+               "criterion"         : ["gini", "entropy"],
+               "max_features"      : ['sqrt','log2',0.2,0.5,0.8],
+               "max_depth"         : [3,4,6,10],
+               "min_samples_split" : [2, 5, 20,50] }
+grid = RSCV(rf, param_distributions=dist_rf,cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
+fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
+
+dist_gbc = {    "n_estimators"     : [100,250,500],
+               "max_features"      : ['sqrt','log2',0.2,0.5,0.8],
+               "max_depth"         : [3,4,6,10],
+               "min_samples_split" : [2, 5, 20,50] } 
+grid = RSCV(gb, param_distributions=dist_gbc, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
+fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
+
+dist_xgb ={
+         'n_estimators' : [100, 250, 500],
+         'min_child_weight': [1, 5, 10],
+        'gamma': [0.5, 1, 1.5, 2, 5],
+        'subsample': [0.6, 0.8, 1.0],
+        'colsample_bytree': [0.6, 0.8, 1.0],
+        'max_depth': [3, 4, 5]
+           }
+grid = RSCV(xgb, param_distributions=dist_xgb, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
+fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
     
