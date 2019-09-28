@@ -129,21 +129,23 @@ for model in models:
     print('*'*25)
     fit_metrics(model, X_train, y_train, X_test, y_test, labels)
     print('*'*25)
-    
+
+ #fit_metrics(logit, X_train, y_train, X_test, y_test, labels)  #81.34% accuracy for logit
+
  dist_rf = {    "n_estimators"      : [100,250,500],
                "criterion"         : ["gini", "entropy"],
                "max_features"      : ['sqrt','log2',0.2,0.5,0.8],
                "max_depth"         : [3,4,6,10],
                "min_samples_split" : [2, 5, 20,50] }
 grid = RSCV(rf, param_distributions=dist_rf,cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
-fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
+#fit_metrics(grid, X_train, y_train, X_test, y_test, labels)  #83.58% accuracy for logit
 
 dist_gbc = {    "n_estimators"     : [100,250,500],
                "max_features"      : ['sqrt','log2',0.2,0.5,0.8],
                "max_depth"         : [3,4,6,10],
                "min_samples_split" : [2, 5, 20,50] } 
 grid = RSCV(gb, param_distributions=dist_gbc, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
-fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
+#fit_metrics(grid, X_train, y_train, X_test, y_test, labels)  #81.34% accuracy 
 
 dist_xgb ={
          'n_estimators' : [100, 250, 500],
@@ -154,5 +156,17 @@ dist_xgb ={
         'max_depth': [3, 4, 5]
            }
 grid = RSCV(xgb, param_distributions=dist_xgb, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=200)
-fit_metrics(grid, X_train, y_train, X_test, y_test, labels)
+#fit_metrics(grid, X_train, y_train, X_test, y_test, labels)    #83.58% accuracy 
     
+dist_svm = {
+        'C':np.linspace(0.0001, 1, 100),
+        'gamma': np.linspace(0.0001, 1,100) ,
+        'kernel': ['linear', 'rbf']}        
+grid_svm = RSCV(xgb, param_distributions=dist_svm, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=400)
+#fit_metrics(grid_svm, X_train, y_train, X_test, y_test, labels)    #84.33% accuracy, best model
+
+#No need to fit models prior to running the classifier, but since i did I gave more weight to SVM
+votes = VC(estimators=[
+('lr', logit), ('rf', grid_rf ) , ('gb', grid_gb), ('xgb', grid_xgb), ('svm', grid_svm) ],
+voting='soft', weights=[1, 1, 1, 1, 2 ])
+fit_metrics(votes, X_train, y_train, X_test, y_test, labels) #Accuracy 83.58 %
