@@ -86,7 +86,6 @@ plt.show()
 pivot = pd.pivot_table(data=data, index='Survived', values=['Age', 'Fare'])
 print(pivot)
 
-
 #Modelling
 seed = 43
 from sklearn.model_selection import train_test_split
@@ -94,9 +93,9 @@ from sklearn.ensemble import RandomForestClassifier as RFC, GradientBoostingClas
 from sklearn.linear_model import LogisticRegression as LR
 from sklearn import metrics as m
 import xgboost as xgb
-from hyperopt import fmin, hp, tpe
 from plot_confusion_matrix import plot_matrix
 from helper_funcs import plot_roc_auc, plot_precision_recall
+from sklearn.preprocessing import StandardScaler as SS
 
 #Data preprocessing 
 targets = data.Survived; targets = targets.map({'Died': 0, 'Survived':1})
@@ -110,11 +109,11 @@ logit = LR(random_state=seed,solver='lbfgs',max_iter=300)
 rf = RFC(n_estimators=250, random_state=seed)
 gb = GBC(n_estimators=250, random_state=seed)
 xgb = xgb.XGBClassifier(objective='reg:logistic', n_estimators=250, seed=42)
-svm = SVC(random_state=seed)
+svm = SVC(random_state=seed,probability=True)
 
 models = [logit, rf,gb,xgb, svm]
 labels = ['Died', 'Survived']
-
+scaler = SS(); X_train = scaler.fit_transform(X_train); X_test = scaler.transform(X_test)  #FOR SVM
 
 def fit_metrics(model, Xtr, ytr, Xts, yts, labels):
     print(model.__class__.__name__ + ' Results:')
@@ -170,5 +169,5 @@ grid_svm = RSCV(svm, param_distributions=dist_svm, cv=5, scoring='accuracy', ver
 #No need to fit models prior to running the classifier, but since i did I gave more weight to SVM
 votes = VC(estimators=[
 ('lr', logit), ('rf', grid_rf ) , ('gb', grid_gb), ('xgb', grid_xgb), ('svm', grid_svm) ],
-voting='soft', weights=[1, 1, 1, 1, 2 ])
-fit_metrics(votes, X_train, y_train, X_test, y_test, labels) #Accuracy 83.58 %
+voting='soft', weights=[1, 1, 1, 1, 1 ])
+fit_metrics(votes, X_train, y_train, X_test, y_test, labels) #Accuracy 82.84 %
