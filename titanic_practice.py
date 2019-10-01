@@ -110,7 +110,9 @@ logit = LR(random_state=seed,solver='lbfgs',max_iter=300)
 rf = RFC(n_estimators=250, random_state=seed)
 gb = GBC(n_estimators=250, random_state=seed)
 xgb = xgb.XGBClassifier(objective='reg:logistic', n_estimators=250, seed=42)
-models = [logit, rf,gb,xgb]
+svm = SVC(random_state=seed)
+
+models = [logit, rf,gb,xgb, svm]
 labels = ['Died', 'Survived']
 
 
@@ -162,7 +164,7 @@ dist_svm = {
         'C':np.linspace(0.0001, 1, 100),
         'gamma': np.linspace(0.0001, 1,100) ,
         'kernel': ['linear', 'rbf']}        
-grid_svm = RSCV(xgb, param_distributions=dist_svm, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=400)
+grid_svm = RSCV(svm, param_distributions=dist_svm, cv=5, scoring='accuracy', verbose=1, n_jobs=2, n_iter=400)
 #fit_metrics(grid_svm, X_train, y_train, X_test, y_test, labels)    #84.33% accuracy, best model
 
 #No need to fit models prior to running the classifier, but since i did I gave more weight to SVM
