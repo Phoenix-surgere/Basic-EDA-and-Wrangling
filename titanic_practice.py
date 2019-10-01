@@ -13,7 +13,7 @@ Sibsp = #siblings/spouses on board, Parch= # parents/children on board
 import pandas as pd
 import matplotlib.pyplot as plt; import seaborn as sns
 import copy
-from helper_funcs import to_categorical
+from helper_funcs import to_categorical, classification_metrics
 data = pd.read_csv('titanic_train.csv')
 
 print(data.isnull().sum()) #tests for NA entries
